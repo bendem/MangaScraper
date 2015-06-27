@@ -1,6 +1,5 @@
 package be.bendem.scraper;
 
-import be.bendem.scraper.implementations.MangaEdenScraper;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
@@ -145,14 +144,17 @@ public class Main {
 
     public static void main(String[] args) {
         String url = null;
+        String implementation = "MangaReaderScraper";
         Range range = new Range();
 
-        for(int i = 0; i < args.length; i++) {
+        for(int i = 0; i < args.length; ++i) {
             switch(args[i]) {
                 case "-r":
                     range = Range.parse(args[++i]);
                     break;
-                // TODO Implementation choice
+                case "-i":
+                    implementation = args[++i];
+                    break;
                 case "-h":
                 case "-help":
                 case "--help":
@@ -168,13 +170,31 @@ public class Main {
             return;
         }
 
-        new Main(new MangaEdenScraper()).start(url, range);
+        if(!implementation.contains(".")) {
+            implementation = "be.bendem.scraper.implementations." + implementation;
+        }
+
+        Scraper scraper;
+        try {
+            scraper = Scraper.class.cast(Class.forName(implementation).newInstance());
+        } catch(InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+
+        new Main(scraper).start(url, range);
     }
 
     private static void printHelp() {
-        System.err.println("Usage java -jar jarfile.jar [-r <range>] <url>");
-        System.err.println("    <range> is either a number (like 1) or two numbers separated with a - (like 1-5)");
-        System.err.println("    <urk>   is a valid url for the chosen implementation");
+        System.err.println();
+        System.err.println("Usage: java -jar jarfile.jar [-i <implementation>] [-r <range>] <url>");
+        System.err.println("    <range>          is either a number (like 1) or two numbers separated with a");
+        System.err.println("                     dash (like 1-5). Default value is 0-INFINITY");
+        System.err.println();
+        System.err.println("    <url>            is a valid url for the chosen implementation");
+        System.err.println();
+        System.err.println("    <implementation> Specify the FQN (or internal name) of the class implementing");
+        System.err.println("                     Scraper to use");
+        System.err.println();
     }
 
 }

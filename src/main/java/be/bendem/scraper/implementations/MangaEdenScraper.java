@@ -35,7 +35,7 @@ public class MangaEdenScraper implements Scraper {
 
         return elemStream
             .map(elem -> new Chapter(
-                Utils.get(elem.attr("href").split("/"), -2),
+                Utils.get(elem.attr("href").split("/"), -2), // rely on manga-eden urls being /lang/manga/chapter/page/
                 elem.select("b").text(),
                 elem.absUrl("href")
             ))

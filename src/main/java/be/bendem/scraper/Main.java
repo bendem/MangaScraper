@@ -41,7 +41,7 @@ public class Main {
         }
     }
 
-    private void start(String url) {
+    private void start(String url, Range range) {
         System.out.println("Getting main page");
         Document document;
         try {
@@ -64,7 +64,9 @@ public class Main {
         List<Chapter> chapters = scraper.getChapters(document, false);
 
         System.out.println("Got " + chapters.size() + " chapters, let's crawl that");
-        chapters.stream().sorted().forEach(chapter -> crawl(chapter, mangaFolder));
+        chapters.stream().sorted()
+            .filter(chapter -> chapter.number >= range.min && chapter.number <= range.max)
+            .forEach(chapter -> crawl(chapter, mangaFolder));
 
         System.out.println("Done crawling");
     }
@@ -108,7 +110,7 @@ public class Main {
             //.stream()
             .filter(entry -> !existing.contains(String.valueOf(entry.getKey())))
             .forEach(entry ->
-                downloadImage(entry.getValue(), entry.getKey(), downloadDir)
+                    downloadImage(entry.getValue(), entry.getKey(), downloadDir)
             );
     }
 
@@ -142,12 +144,37 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        if(args.length < 1) {
-            System.err.println("No url given");
+        String url = null;
+        Range range = new Range();
+
+        for(int i = 0; i < args.length; i++) {
+            switch(args[i]) {
+                case "-r":
+                    range = Range.parse(args[++i]);
+                    break;
+                // TODO Implementation choice
+                case "-h":
+                case "-help":
+                case "--help":
+                    printHelp();
+                    return;
+                default:
+                    url = args[i];
+            }
+        }
+
+        if(url == null) {
+            printHelp();
             return;
         }
 
-        new Main(new MangaEdenScraper()).start(args[0]);
+        new Main(new MangaEdenScraper()).start(url, range);
+    }
+
+    private static void printHelp() {
+        System.err.println("Usage java -jar jarfile.jar [-r <range>] <url>");
+        System.err.println("    <range> is either a number (like 1) or two numbers separated with a - (like 1-5)");
+        System.err.println("    <urk>   is a valid url for the chosen implementation");
     }
 
 }

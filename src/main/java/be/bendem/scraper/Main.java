@@ -18,7 +18,6 @@ import java.util.stream.Stream;
 /**
  * TODO Better error handling, recover and such
  * TODO Write a file with a download summary to allow restarting.
- * TODO Command line option to ignore half chapters
  */
 public class Main {
 

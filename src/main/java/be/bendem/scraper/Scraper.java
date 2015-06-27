@@ -5,6 +5,14 @@ import org.jsoup.nodes.Document;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Keep in mind when implementing this interface that the scraper logic is:
+ * + get the summary document
+ * + get the manga name out of that
+ * + get the manga chapter urls out of that as well
+ * + for each chapter url, get the page urls
+ * + for each page url, get the image url
+ */
 public interface Scraper {
 
     /**

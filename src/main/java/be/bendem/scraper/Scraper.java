@@ -29,7 +29,7 @@ public interface Scraper {
      * @param document the jsoup document fetched by the application
      * @param bonus whether to fetch bonus chapters or not (can be ignored if
      *     there is no reliable way to tell if a chapter is a bonus chapter)
-     * @return a list of chapter information ordered from first to last
+     * @return a list of chapter information
      */
     List<Chapter> getChapters(Document document, boolean bonus);
 

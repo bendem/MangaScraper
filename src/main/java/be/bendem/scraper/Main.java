@@ -12,7 +12,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -65,10 +64,7 @@ public class Main {
         List<Chapter> chapters = scraper.getChapters(document, false);
 
         System.out.println("Got " + chapters.size() + " chapters, let's crawl that");
-        ListIterator<Chapter> it = chapters.listIterator(chapters.size());
-        while(it.hasPrevious()) {
-            crawl(it.previous(), mangaFolder);
-        }
+        chapters.stream().sorted().forEach(chapter -> crawl(chapter, mangaFolder));
 
         System.out.println("Done crawling");
     }
@@ -135,7 +131,7 @@ public class Main {
             e.printStackTrace();
             return;
         }
-        String ext = Utils.last(imgSrc.split("\\."));
+        String ext = Utils.getExtension(imgSrc);
         Path imgPath = downloadDir.resolve(Paths.get(number + "." + ext));
 
         try {

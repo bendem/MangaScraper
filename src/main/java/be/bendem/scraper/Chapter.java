@@ -1,13 +1,31 @@
 package be.bendem.scraper;
 
-public class Chapter {
+/**
+ * Represents a manga chapter downloadable by the Scraper implementation that
+ * built it.
+ *
+ * Chapters are sorted by their numbers which are represented as doubles
+ * because people thought it was clever to have chapter numbers like 1.5.
+ */
+public class Chapter implements Comparable<Chapter> {
 
-    public final String url;
+    public final double number;
     public final String name;
+    public final String url;
 
-    public Chapter(String url, String name) {
-        this.url = url;
+    public Chapter(String number, String name, String url) {
+        this(Double.parseDouble(number), name, url);
+    }
+
+    public Chapter(double number, String name, String url) {
+        this.number = number;
         this.name = name;
+        this.url = url;
+    }
+
+    @Override
+    public int compareTo(Chapter o) {
+        return Double.compare(this.number, o.number);
     }
 
 }

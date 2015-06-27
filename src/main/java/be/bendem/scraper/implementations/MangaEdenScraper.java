@@ -2,6 +2,7 @@ package be.bendem.scraper.implementations;
 
 import be.bendem.scraper.Chapter;
 import be.bendem.scraper.Scraper;
+import be.bendem.scraper.Utils;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
@@ -33,7 +34,11 @@ public class MangaEdenScraper implements Scraper {
         }
 
         return elemStream
-            .map(elem -> new Chapter(elem.absUrl("href"), elem.select("b").text()))
+            .map(elem -> new Chapter(
+                Utils.get(elem.attr("href").split("/"), -2),
+                elem.select("b").text(),
+                elem.absUrl("href")
+            ))
             .collect(Collectors.toList());
     }
 

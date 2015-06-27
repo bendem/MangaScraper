@@ -4,15 +4,15 @@ import java.util.Arrays;
 
 public class Utils {
 
-    public static <T> T last(T[] arr) {
-        if(arr.length == 0) {
-            throw new IllegalArgumentException("No item in the arr");
+    public static <T> T get(T[] arr, int index) {
+        if(index < 0) {
+            return arr[arr.length + index];
         }
-        return arr[arr.length - 1];
+        return arr[index];
     }
 
     public static String getExtension(String filename) {
-        return last(filename.split("\\."));
+        return get(filename.split("\\."), -1);
     }
 
     public static String stripExtenstion(String filename) {

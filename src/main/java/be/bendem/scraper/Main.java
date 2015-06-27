@@ -190,10 +190,10 @@ public class Main {
         System.err.println("    <range>          is either a number (like 1) or two numbers separated with a");
         System.err.println("                     dash (like 1-5). Default value is 0-INFINITY");
         System.err.println();
-        System.err.println("    <url>            is a valid url for the chosen implementation");
-        System.err.println();
         System.err.println("    <implementation> Specify the FQN (or internal name) of the class implementing");
         System.err.println("                     Scraper to use");
+        System.err.println();
+        System.err.println("    <url>            is a valid url for the chosen implementation");
         System.err.println();
     }
 

@@ -41,7 +41,8 @@ public class MangaTownScraper implements Scraper {
 
     @Override
     public String getImageUrl(Document document) {
-        return document.select("#image").first().absUrl("src");
+        String src = document.select("#image").first().absUrl("src");
+        return src.substring(0, src.indexOf('?'));
     }
 
 }

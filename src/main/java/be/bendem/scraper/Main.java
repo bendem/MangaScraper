@@ -107,7 +107,7 @@ public class Main {
             throw new RuntimeException(e);
         }
 
-        scraper.getImageUrlsFor(document).entrySet()
+        scraper.getImageUrlsForChapter(document).entrySet()
             .parallelStream()
             //.stream()
             .filter(entry -> !existing.contains(String.valueOf(entry.getKey())))
@@ -127,7 +127,7 @@ public class Main {
             throw new RuntimeException(e);
         }
 
-        String imgSrc = document.select("#mainImg").first().absUrl("src");
+        String imgSrc = scraper.getImageUrl(document);
         URL imgUrl;
         try {
             imgUrl = new URL(imgSrc);

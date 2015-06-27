@@ -21,19 +21,19 @@ import java.util.stream.Stream;
  */
 public class Main {
 
-    private static final Path DOWNLOAD = Paths.get("download");
-
     private final Scraper scraper;
+    private final Path output;
 
-    public Main(Scraper scraper) {
+    public Main(Scraper scraper, Path output) {
         this.scraper = scraper;
+        this.output = output;
 
-        if(Files.isDirectory(DOWNLOAD)) {
+        if(Files.isDirectory(output)) {
             return;
         }
 
         try {
-            Files.createDirectory(DOWNLOAD);
+            Files.createDirectory(output);
         } catch(IOException e) {
             throw new RuntimeException(e);
         }
@@ -49,7 +49,7 @@ public class Main {
         }
 
         String name = scraper.getName(document);
-        Path mangaFolder = DOWNLOAD.resolve(name);
+        Path mangaFolder = output.resolve(name);
         if(!Files.isDirectory(mangaFolder)) {
             try {
                 Files.createDirectory(mangaFolder);
@@ -144,6 +144,7 @@ public class Main {
     public static void main(String[] args) {
         String url = null;
         String implementation = "MangaReaderScraper";
+        String output = "download";
         Range range = new Range();
 
         for(int i = 0; i < args.length; ++i) {
@@ -153,6 +154,9 @@ public class Main {
                     break;
                 case "-i":
                     implementation = args[++i];
+                    break;
+                case "-o":
+                    output = args[++i];
                     break;
                 case "-h":
                 case "-help":
@@ -180,17 +184,19 @@ public class Main {
             throw new RuntimeException(e);
         }
 
-        new Main(scraper).start(url, range);
+        new Main(scraper, Paths.get(output)).start(url, range);
     }
 
     private static void printHelp() {
         System.err.println();
-        System.err.println("Usage: java -jar jarfile.jar [-i <implementation>] [-r <range>] <url>");
-        System.err.println("    <range>          is either a number (like 1) or two numbers separated with a");
+        System.err.println("Usage: java -jar jarfile.jar [-i <implementation>] [-r <range>] [-o <output>] <url>");
+        System.err.println("    <range>          Is either a number (like 1) or two numbers separated with a");
         System.err.println("                     dash (like 1-5). Default value is 0-INFINITY");
         System.err.println();
         System.err.println("    <implementation> Specify the FQN (or internal name) of the class implementing");
         System.err.println("                     Scraper to use");
+        System.err.println();
+        System.err.println("    <output>         Specify the folder to put the downloads in. Default value is download");
         System.err.println();
         System.err.println("    <url>            is a valid url for the chosen implementation");
         System.err.println();

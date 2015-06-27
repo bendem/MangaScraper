@@ -25,6 +25,6 @@ build.dependsOn(shadowJar)
 
 jar {
     manifest {
-        attributes 'Main-Class': 'be.bendem.scraper.MangaEdenScrapper'
+        attributes 'Main-Class': 'be.bendem.scraper.Main'
     }
 }

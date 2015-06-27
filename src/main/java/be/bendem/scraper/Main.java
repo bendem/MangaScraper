@@ -1,8 +1,8 @@
 package be.bendem.scraper;
 
+import be.bendem.scraper.mangaeden.MangaEdenScraper;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -18,16 +18,19 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * TODO Extract Crawl interface and write one for multiple manga reader sites
  * TODO Better error handling, recover and such
  * TODO Write a file with a download summary to allow restarting.
  * TODO Command line option to ignore half chapters
  */
-public class MangaEdenScraper {
+public class Main {
 
     private static final Path DOWNLOAD = Paths.get("download");
 
-    public MangaEdenScraper() {
+    private final Scraper scraper;
+
+    public Main(Scraper scraper) {
+        this.scraper = scraper;
+
         if(Files.isDirectory(DOWNLOAD)) {
             return;
         }
@@ -40,22 +43,40 @@ public class MangaEdenScraper {
     }
 
     private void start(String url) {
-        System.out.println("Getting chapters");
-        List<Chapter> chapters = getChapters(url);
+        System.out.println("Getting main page");
+        Document document;
+        try {
+            document = Jsoup.connect(url).get();
+        } catch(IOException e) {
+            throw new RuntimeException(e);
+        }
 
-        System.out.println("Got " + chapters.size() + ", crawling");
+        String name = scraper.getName(document);
+        Path mangaFolder = DOWNLOAD.resolve(name);
+        if(!Files.isDirectory(mangaFolder)) {
+            try {
+                Files.createDirectory(mangaFolder);
+            } catch(IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        System.out.println("Getting chapters for '" + name + "'");
+        List<Chapter> chapters = scraper.getChapters(document, false);
+
+        System.out.println("Got " + chapters.size() + " chapters, let's crawl that");
         ListIterator<Chapter> it = chapters.listIterator(chapters.size());
         while(it.hasPrevious()) {
-            crawl(it.previous());
+            crawl(it.previous(), mangaFolder);
         }
 
         System.out.println("Done crawling");
     }
 
-    private void crawl(Chapter chapter) {
+    private void crawl(Chapter chapter, Path folder) {
         System.out.println("Downloading chapter '" + chapter.name + "' (" + chapter.url + ")");
 
-        Path downloadDir = DOWNLOAD.resolve(chapter.name);
+        Path downloadDir = folder.resolve(chapter.name);
         Set<String> existing;
         if(!Files.isDirectory(downloadDir)) {
             try {
@@ -85,17 +106,17 @@ public class MangaEdenScraper {
             // TODO Retry?
             throw new RuntimeException(e);
         }
-        Elements pages = document.select("#top-in > div.top-title > select:nth-child(5) > option");
-        pages
+
+        scraper.getImageUrlsFor(document).entrySet()
             .parallelStream()
             //.stream()
-            .filter(option -> !existing.contains(option.text()))
-            .forEach(option ->
-                downloadImage(option.absUrl("value"), option.text(), downloadDir)
+            .filter(entry -> !existing.contains(String.valueOf(entry.getKey())))
+            .forEach(entry ->
+                downloadImage(entry.getValue(), entry.getKey(), downloadDir)
             );
     }
 
-    private void downloadImage(String url, String number, Path downloadDir) {
+    private void downloadImage(String url, int number, Path downloadDir) {
         System.out.println("Downloading " + url);
 
         Document document;
@@ -115,7 +136,7 @@ public class MangaEdenScraper {
             return;
         }
         String ext = Utils.last(imgSrc.split("\\."));
-        Path imgPath = downloadDir.resolve(Paths.get(number + '.' + ext));
+        Path imgPath = downloadDir.resolve(Paths.get(number + "." + ext));
 
         try {
             Files.copy(imgUrl.openStream(), imgPath);
@@ -124,27 +145,13 @@ public class MangaEdenScraper {
         }
     }
 
-    private List<Chapter> getChapters(String url) {
-        Document document;
-        try {
-            document = Jsoup.connect(url).get();
-        } catch(IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        return document
-            .select("#leftContent > table > tbody > tr > td:first-child > a").stream()
-            .filter(elem -> !elem.select("b").text().contains(".")) // Ignore weird half-chapters TODO Make option
-            .map(elem -> new Chapter(elem.absUrl("href"), elem.select("b").text()))
-            .collect(Collectors.toList());
-    }
-
     public static void main(String[] args) {
         if(args.length < 1) {
             System.err.println("No url given");
             return;
         }
-        new MangaEdenScraper().start(args[0]);
+
+        new Main(new MangaEdenScraper()).start(args[0]);
     }
 
 }

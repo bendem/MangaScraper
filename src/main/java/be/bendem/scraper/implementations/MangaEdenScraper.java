@@ -1,4 +1,4 @@
-package be.bendem.scraper.mangaeden;
+package be.bendem.scraper.implementations;
 
 import be.bendem.scraper.Chapter;
 import be.bendem.scraper.Scraper;

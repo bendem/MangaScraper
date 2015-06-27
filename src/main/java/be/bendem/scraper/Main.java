@@ -1,6 +1,6 @@
 package be.bendem.scraper;
 
-import be.bendem.scraper.mangaeden.MangaEdenScraper;
+import be.bendem.scraper.implementations.MangaEdenScraper;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 

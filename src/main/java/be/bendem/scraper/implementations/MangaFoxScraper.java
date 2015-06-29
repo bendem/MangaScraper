@@ -2,16 +2,61 @@ package be.bendem.scraper.implementations;
 
 import be.bendem.scraper.Chapter;
 import be.bendem.scraper.Scraper;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Scraper implementation for http://mangafox.me/
+ */
 public class MangaFoxScraper implements Scraper {
+
+    public static final String SEARCH_URL = "http://mangafox.me/ajax/search.php?term=";
+    public static final String MANGA_URL = "http://mangafox.me/manga/";
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Map<String, String> search(String query) {
+        URL url;
+        try {
+            url = new URL(SEARCH_URL + URLEncoder.encode(query, StandardCharsets.UTF_8.displayName()));
+        } catch(MalformedURLException | UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+
+        Reader reader;
+        try {
+            reader = new InputStreamReader(url.openStream(), StandardCharsets.UTF_8);
+        } catch(IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        List<List<String>> parsed;
+        try {
+            parsed = (List<List<String>>) new JSONParser().parse(reader);
+        } catch(IOException | ParseException e) {
+            throw new RuntimeException(e);
+        }
+
+        return parsed.stream()
+            .collect(Collectors.toMap(
+                arr -> arr.get(1),
+                arr -> MANGA_URL + arr.get(2)
+            ));
+    }
 
     @Override
     public String getName(Document document) {

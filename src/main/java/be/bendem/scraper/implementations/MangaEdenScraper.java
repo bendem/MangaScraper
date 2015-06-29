@@ -33,7 +33,8 @@ public class MangaEdenScraper implements Scraper {
         return search.select("#mangaList > tbody > tr > td:nth-child(1) > a").stream()
             .collect(Collectors.toMap(
                 a -> a.text(),
-                a -> a.absUrl("href")
+                a -> a.absUrl("href"),
+                (a, b) -> a // If there are duplicates, just ignore them
             ));
     }
 

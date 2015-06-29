@@ -30,7 +30,8 @@ public class MangaTownScraper implements Scraper {
         return search.select(".search_result > ul > li > .title > a").stream()
             .collect(Collectors.toMap(
                 a -> a.attr("title"),
-                a -> a.absUrl("href")
+                a -> a.absUrl("href"),
+                (a, b) -> a // If there are duplicates, just ignore them
             ));
     }
 

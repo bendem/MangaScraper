@@ -12,7 +12,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -23,7 +22,7 @@ import java.util.stream.Collectors;
 public class MangaReaderScraper implements Scraper {
 
     private static final String SEARCH_URL = "http://www.mangareader.net/actions/search/?q=";
-    private static final String MANGA_URL = "http://www.mangareader.net/";
+    private static final String MANGA_URL = "http://www.mangareader.net";
 
     @Override
     public Map<String, String> search(String query) {
@@ -45,7 +44,8 @@ public class MangaReaderScraper implements Scraper {
             .map(line -> line.split("\\|"))
             .collect(Collectors.toMap(
                 parts -> parts[0],
-                parts -> MANGA_URL + parts[4]
+                parts -> MANGA_URL + parts[4],
+                (a, b) -> a // If there are duplicates, just ignore them
             ));
     }
 

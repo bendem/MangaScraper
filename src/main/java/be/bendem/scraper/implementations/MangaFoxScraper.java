@@ -54,7 +54,8 @@ public class MangaFoxScraper implements Scraper {
         return parsed.stream()
             .collect(Collectors.toMap(
                 arr -> arr.get(1),
-                arr -> MANGA_URL + arr.get(2)
+                arr -> MANGA_URL + arr.get(2),
+                (a, b) -> a // If there are duplicates, just ignore them
             ));
     }
 

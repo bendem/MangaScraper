@@ -58,8 +58,6 @@ public interface Scraper {
      * @return a list of urls which can be handled by {@link
      *     Scraper#getChapters(Document, boolean)}
      */
-    default Map<String, String> search(String query) {
-        throw new UnsupportedOperationException("Search is not supported by this scrapper implementation");
-    }
+    Map<String, String> search(String query);
 
 }

@@ -22,6 +22,11 @@ dependencies {
     compile group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1'
 }
 
+shadowJar {
+    exclude '*junit*'
+    exclude '*hamcrest*'
+}
+
 build.dependsOn(shadowJar)
 
 jar {

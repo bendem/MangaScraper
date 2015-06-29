@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -141,7 +142,14 @@ public class Main {
     public void search(String query) {
         System.out.println("| Search results for '" + query + "'");
         System.out.println('|');
-        scraper.search(query)
+
+        Map<String, String> search = scraper.search(query);
+        if(search.isEmpty()) {
+            System.out.println("| <no results>");
+            return;
+        }
+
+        search
             .entrySet().stream()
             .map(e -> "| " + e.getKey() + ": " + e.getValue())
             .forEach(System.out::println);

@@ -33,20 +33,17 @@ public class MangaReaderScraper implements Scraper {
             throw new RuntimeException(e);
         }
 
-        BufferedReader reader;
-        try {
-            reader = new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8));
+        try(BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
+            return reader.lines()
+                .map(line -> line.split("\\|"))
+                .collect(Collectors.toMap(
+                    parts -> parts[0],
+                    parts -> MANGA_URL + parts[4],
+                    (a, b) -> a // If there are duplicates, just ignore them
+                ));
         } catch(IOException e) {
             throw new RuntimeException(e);
         }
-
-        return reader.lines()
-            .map(line -> line.split("\\|"))
-            .collect(Collectors.toMap(
-                parts -> parts[0],
-                parts -> MANGA_URL + parts[4],
-                (a, b) -> a // If there are duplicates, just ignore them
-            ));
     }
 
     @Override

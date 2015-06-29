@@ -37,15 +37,8 @@ public class MangaFoxScraper implements Scraper {
             throw new RuntimeException(e);
         }
 
-        Reader reader;
-        try {
-            reader = new InputStreamReader(url.openStream(), StandardCharsets.UTF_8);
-        } catch(IOException e) {
-            throw new RuntimeException(e);
-        }
-
         List<List<String>> parsed;
-        try {
+        try(Reader reader = new InputStreamReader(url.openStream(), StandardCharsets.UTF_8)) {
             parsed = (List<List<String>>) new JSONParser().parse(reader);
         } catch(IOException | ParseException e) {
             throw new RuntimeException(e);

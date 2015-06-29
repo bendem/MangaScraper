@@ -22,24 +22,33 @@ import java.util.stream.Stream;
 public class Main {
 
     private final Scraper scraper;
-    private final Path output;
 
-    public Main(Scraper scraper, Path output) {
+    public Main(Scraper scraper) {
         this.scraper = scraper;
-        this.output = output;
+    }
 
-        if(Files.isDirectory(output)) {
-            return;
+    /**
+     * Creates a directory if it doesn't already exist.
+     *
+     * @param dir the directory to create
+     * @return whether a new directory was actually created or not
+     */
+    private boolean createDirectory(Path dir) {
+        if(Files.isDirectory(dir)) {
+            return false;
         }
 
         try {
-            Files.createDirectory(output);
+            Files.createDirectory(dir);
+            return true;
         } catch(IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void start(String url, Range range) {
+    public void start(String url, Range range, Path output) {
+        createDirectory(output);
+
         System.out.println("Getting main page");
         Document document;
         try {
@@ -50,13 +59,7 @@ public class Main {
 
         String name = scraper.getName(document);
         Path mangaFolder = output.resolve(name);
-        if(!Files.isDirectory(mangaFolder)) {
-            try {
-                Files.createDirectory(mangaFolder);
-            } catch(IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
+        createDirectory(mangaFolder);
 
         System.out.println("Getting chapters for '" + name + "'");
         List<Chapter> chapters = scraper.getChapters(document, false);
@@ -74,13 +77,7 @@ public class Main {
 
         Path downloadDir = folder.resolve(chapter.name);
         Set<String> existing;
-        if(!Files.isDirectory(downloadDir)) {
-            try {
-                Files.createDirectory(downloadDir);
-            } catch(IOException e) {
-                e.printStackTrace();
-                return;
-            }
+        if(createDirectory(downloadDir)) {
             existing = Collections.emptySet();
         } else {
             Stream<Path> stream;
@@ -184,7 +181,8 @@ public class Main {
             throw new RuntimeException(e);
         }
 
-        new Main(scraper, Paths.get(output)).start(url, range);
+        Main main = new Main(scraper);
+        main.start(url, range, Paths.get(output));
     }
 
     private static void printHelp() {

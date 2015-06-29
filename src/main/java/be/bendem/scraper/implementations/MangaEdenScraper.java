@@ -3,9 +3,11 @@ package be.bendem.scraper.implementations;
 import be.bendem.scraper.Chapter;
 import be.bendem.scraper.Scraper;
 import be.bendem.scraper.Utils;
+import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -15,6 +17,25 @@ import java.util.stream.Stream;
  * Scraper implementation for http://www.mangaeden.com/
  */
 public class MangaEdenScraper implements Scraper {
+
+    @Override
+    public Map<String, String> search(String query) {
+        Document search;
+        try {
+            search = Jsoup
+                .connect("http://www.mangaeden.com/en-directory/")
+                .data("title", query)
+                .get();
+        } catch(IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        return search.select("#mangaList > tbody > tr > td:nth-child(1) > a").stream()
+            .collect(Collectors.toMap(
+                a -> a.text(),
+                a -> a.absUrl("href")
+            ));
+    }
 
     @Override
     public String getName(Document document) {

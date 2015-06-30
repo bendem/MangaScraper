@@ -1,7 +1,7 @@
-package be.bendem.scraper.implementations;
+package be.bendem.manga.scraper.implementations;
 
-import be.bendem.scraper.Chapter;
-import be.bendem.scraper.Scraper;
+import be.bendem.manga.scraper.Chapter;
+import be.bendem.manga.scraper.Scraper;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.jsoup.nodes.Document;

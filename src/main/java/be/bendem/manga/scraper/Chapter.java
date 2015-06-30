@@ -1,4 +1,4 @@
-package be.bendem.scraper;
+package be.bendem.manga.scraper;
 
 /**
  * Represents a manga chapter downloadable by the Scraper implementation that

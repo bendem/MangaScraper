@@ -1,4 +1,4 @@
-package be.bendem.scraper;
+package be.bendem.manga.scraper;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -192,7 +192,7 @@ public class Main {
         }
 
         if(!implementation.contains(".")) {
-            implementation = "be.bendem.scraper.implementations." + implementation;
+            implementation = "be.bendem.manga.scraper.implementations." + implementation;
         }
 
         Scraper scraper;

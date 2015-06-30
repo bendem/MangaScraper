@@ -1,4 +1,4 @@
-package be.bendem.scraper;
+package be.bendem.manga.scraper;
 
 import java.util.Arrays;
 

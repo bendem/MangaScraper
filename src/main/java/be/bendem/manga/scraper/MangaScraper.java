@@ -20,11 +20,11 @@ import java.util.stream.Stream;
  * TODO Better error handling, recover and such
  * TODO Write a file with a download summary to allow restarting.
  */
-public class Main {
+public class MangaScraper {
 
     private final Scraper scraper;
 
-    public Main(Scraper scraper) {
+    public MangaScraper(Scraper scraper) {
         this.scraper = scraper;
     }
 
@@ -47,33 +47,44 @@ public class Main {
         }
     }
 
-    public void start(String url, Range range, Path output) {
+    public void download(String url, Range range, Path output) {
         createDirectory(output);
 
-        System.out.println("Getting main page");
+        String name = getName(url);
+        Path mangaFolder = output.resolve(name);
+        createDirectory(mangaFolder);
+
+        List<Chapter> chapters = getChapters(url);
+
+        System.out.println("Got " + chapters.size() + " chapters, let's crawl that");
+        chapters.stream().sorted()
+            .filter(chapter -> chapter.number >= range.min && chapter.number <= range.max)
+            .forEach(chapter -> downloadChapter(chapter, mangaFolder));
+
+        System.out.println("Done crawling");
+    }
+
+    public String getName(String url) {
         Document document;
         try {
             document = Jsoup.connect(url).get();
         } catch(IOException e) {
             throw new RuntimeException(e);
         }
-
-        String name = scraper.getName(document);
-        Path mangaFolder = output.resolve(name);
-        createDirectory(mangaFolder);
-
-        System.out.println("Getting chapters for '" + name + "'");
-        List<Chapter> chapters = scraper.getChapters(document, false);
-
-        System.out.println("Got " + chapters.size() + " chapters, let's crawl that");
-        chapters.stream().sorted()
-            .filter(chapter -> chapter.number >= range.min && chapter.number <= range.max)
-            .forEach(chapter -> crawl(chapter, mangaFolder));
-
-        System.out.println("Done crawling");
+        return scraper.getName(document);
     }
 
-    private void crawl(Chapter chapter, Path folder) {
+    public List<Chapter> getChapters(String url) {
+        Document document;
+        try {
+            document = Jsoup.connect(url).get();
+        } catch(IOException e) {
+            throw new RuntimeException(e);
+        }
+        return scraper.getChapters(document, false);
+    }
+
+    public void downloadChapter(Chapter chapter, Path folder) {
         System.out.println("Downloading chapter '" + chapter.name + "' (" + chapter.url + ")");
 
         Path downloadDir = folder.resolve(chapter.name);
@@ -202,13 +213,13 @@ public class Main {
             throw new RuntimeException(e);
         }
 
-        Main main = new Main(scraper);
+        MangaScraper mangaScraper = new MangaScraper(scraper);
         if(search != null) {
-            main.search(search);
+            mangaScraper.search(search);
             return;
         }
 
-        main.start(url, range, Paths.get(output));
+        mangaScraper.download(url, range, Paths.get(output));
     }
 
     private static void printHelp() {

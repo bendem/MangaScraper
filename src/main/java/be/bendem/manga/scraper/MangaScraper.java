@@ -22,10 +22,10 @@ import java.util.stream.Stream;
  */
 public class MangaScraper {
 
-    private final Scraper scraper;
+    private final Scraper impl;
 
-    public MangaScraper(Scraper scraper) {
-        this.scraper = scraper;
+    public MangaScraper(Scraper impl) {
+        this.impl = impl;
     }
 
     /**
@@ -56,12 +56,9 @@ public class MangaScraper {
 
         List<Chapter> chapters = getChapters(url);
 
-        System.out.println("Got " + chapters.size() + " chapters, let's crawl that");
         chapters.stream().sorted()
             .filter(chapter -> chapter.number >= range.min && chapter.number <= range.max)
             .forEach(chapter -> downloadChapter(chapter, mangaFolder));
-
-        System.out.println("Done crawling");
     }
 
     public String getName(String url) {
@@ -71,7 +68,7 @@ public class MangaScraper {
         } catch(IOException e) {
             throw new RuntimeException(e);
         }
-        return scraper.getName(document);
+        return impl.getName(document);
     }
 
     public List<Chapter> getChapters(String url) {
@@ -81,13 +78,12 @@ public class MangaScraper {
         } catch(IOException e) {
             throw new RuntimeException(e);
         }
-        return scraper.getChapters(document, false);
+        return impl.getChapters(document, false);
     }
 
     public void downloadChapter(Chapter chapter, Path folder) {
-        System.out.println("Downloading chapter '" + chapter.name + "' (" + chapter.url + ")");
-
         Path downloadDir = folder.resolve(chapter.name);
+
         Set<String> existing;
         if(createDirectory(downloadDir)) {
             existing = Collections.emptySet();
@@ -112,7 +108,7 @@ public class MangaScraper {
             throw new RuntimeException(e);
         }
 
-        scraper.getImageUrlsForChapter(document).entrySet()
+        impl.getImageUrlsForChapter(document).entrySet()
             .parallelStream()
             //.stream()
             .filter(entry -> !existing.contains(String.valueOf(entry.getKey())))
@@ -122,8 +118,6 @@ public class MangaScraper {
     }
 
     private void downloadImage(String url, int number, Path downloadDir) {
-        System.out.println("Downloading " + url);
-
         Document document;
         try {
             document = Jsoup.connect(url).get();
@@ -132,7 +126,7 @@ public class MangaScraper {
             throw new RuntimeException(e);
         }
 
-        String imgSrc = scraper.getImageUrl(document);
+        String imgSrc = impl.getImageUrl(document);
         URL imgUrl;
         try {
             imgUrl = new URL(imgSrc);
@@ -150,93 +144,8 @@ public class MangaScraper {
         }
     }
 
-    public void search(String query) {
-        System.out.println("| Search results for '" + query + "'");
-        System.out.println('|');
-
-        Map<String, String> search = scraper.search(query);
-        if(search.isEmpty()) {
-            System.out.println("| <no results>");
-            return;
-        }
-
-        search
-            .entrySet().stream()
-            .map(e -> "| " + e.getKey() + ": " + e.getValue())
-            .forEach(System.out::println);
-    }
-
-    public static void main(String[] args) {
-        String url = null;
-        String implementation = "MangaReaderScraper";
-        String output = "download";
-        String search = null;
-        Range range = new Range();
-
-        for(int i = 0; i < args.length; ++i) {
-            switch(args[i]) {
-                case "-r":
-                    range = Range.parse(args[++i]);
-                    break;
-                case "-i":
-                    implementation = args[++i];
-                    break;
-                case "-o":
-                    output = args[++i];
-                    break;
-                case "-s":
-                    search = args[++i];
-                    break;
-                case "-h":
-                case "-help":
-                case "--help":
-                    printHelp();
-                    return;
-                default:
-                    url = args[i];
-            }
-        }
-
-        if(url == null && search == null) {
-            printHelp();
-            return;
-        }
-
-        if(!implementation.contains(".")) {
-            implementation = "be.bendem.manga.scraper.implementations." + implementation;
-        }
-
-        Scraper scraper;
-        try {
-            scraper = Scraper.class.cast(Class.forName(implementation).newInstance());
-        } catch(InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-
-        MangaScraper mangaScraper = new MangaScraper(scraper);
-        if(search != null) {
-            mangaScraper.search(search);
-            return;
-        }
-
-        mangaScraper.download(url, range, Paths.get(output));
-    }
-
-    private static void printHelp() {
-        System.err.println();
-        System.err.println("Usage: java -jar jarfile.jar [-i <implementation>] [-r <range>] [-o <output>] <-s <query>|<url>>");
-        System.err.println("    <range>          Is either a number (like 1) or two numbers separated with a");
-        System.err.println("                     dash (like 1-5). Default value is 0-INFINITY");
-        System.err.println();
-        System.err.println("    <implementation> Specify the FQN (or internal name) of the class implementing");
-        System.err.println("                     Scraper to use");
-        System.err.println();
-        System.err.println("    <output>         Specify the folder to put the downloads in. Default value is download");
-        System.err.println();
-        System.err.println("    <query>          A search query");
-        System.err.println();
-        System.err.println("    <url>            is a valid url for the chosen implementation");
-        System.err.println();
+    public Map<String, String> search(String query) {
+        return impl.search(query);
     }
 
 }

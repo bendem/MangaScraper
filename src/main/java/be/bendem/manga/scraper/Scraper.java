@@ -2,6 +2,7 @@ package be.bendem.manga.scraper;
 
 import org.jsoup.nodes.Document;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -58,6 +59,6 @@ public interface Scraper {
      * @return a list of urls which can be handled by {@link
      *     Scraper#getChapters(Document, boolean)}
      */
-    Map<String, String> search(String query);
+    Map<String, String> search(String query) throws IOException;
 
 }

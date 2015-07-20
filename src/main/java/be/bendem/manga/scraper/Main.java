@@ -15,7 +15,7 @@ public class Main {
         System.out.println("| Search results for '" + query + "'");
         System.out.println('|');
 
-        Map<String, String> search = scraper.search(query);
+        Map<String, String> search = scraper.search(query, Throwable::printStackTrace);
         if(search.isEmpty()) {
             System.out.println("| <no results>");
             return;
@@ -80,7 +80,16 @@ public class Main {
             return;
         }
 
-        main.scraper.download(url, range, Paths.get(output));
+        main.scraper.download(
+            url, range, Paths.get(output),
+            (current, total) -> System.out.println(current + " / " + total),
+            (chapter, e) -> {
+                if(chapter != null) {
+                    System.err.println("Error downloading " + chapter.number + " '" + chapter.name + "'");
+                }
+                e.printStackTrace();
+            }
+        );
     }
 
     private static void printHelp() {

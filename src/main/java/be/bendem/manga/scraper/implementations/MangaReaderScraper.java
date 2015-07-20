@@ -7,8 +7,6 @@ import org.jsoup.nodes.Document;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -25,13 +23,8 @@ public class MangaReaderScraper implements Scraper {
     private static final String MANGA_URL = "http://www.mangareader.net";
 
     @Override
-    public Map<String, String> search(String query) {
-        URL url;
-        try {
-            url = new URL(SEARCH_URL + URLEncoder.encode(query, StandardCharsets.UTF_8.displayName()));
-        } catch(MalformedURLException | UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
+    public Map<String, String> search(String query) throws IOException {
+        URL url = new URL(SEARCH_URL + URLEncoder.encode(query, StandardCharsets.UTF_8.displayName()));
 
         try(BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
             return reader.lines()
@@ -41,8 +34,6 @@ public class MangaReaderScraper implements Scraper {
                     parts -> MANGA_URL + parts[4],
                     (a, b) -> a // If there are duplicates, just ignore them
                 ));
-        } catch(IOException e) {
-            throw new RuntimeException(e);
         }
     }
 

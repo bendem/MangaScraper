@@ -19,20 +19,15 @@ import java.util.stream.Stream;
 public class MangaEdenScraper implements Scraper {
 
     @Override
-    public Map<String, String> search(String query) {
-        Document search;
-        try {
-            search = Jsoup
-                .connect("http://www.mangaeden.com/en-directory/")
-                .data("title", query)
-                .get();
-        } catch(IOException e) {
-            throw new RuntimeException(e);
-        }
+    public Map<String, String> search(String query) throws IOException {
+        Document search = Jsoup
+            .connect("http://www.mangaeden.com/en-directory/")
+            .data("title", query)
+            .get();
 
         return search.select("#mangaList > tbody > tr > td:nth-child(1) > a").stream()
             .collect(Collectors.toMap(
-                a -> a.text(),
+                Element::text,
                 a -> a.absUrl("href"),
                 (a, b) -> a // If there are duplicates, just ignore them
             ));

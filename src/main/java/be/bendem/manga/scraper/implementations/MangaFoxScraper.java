@@ -10,7 +10,6 @@ import org.jsoup.nodes.Element;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -29,18 +28,13 @@ public class MangaFoxScraper implements Scraper {
 
     @Override
     @SuppressWarnings("unchecked")
-    public Map<String, String> search(String query) {
-        URL url;
-        try {
-            url = new URL(SEARCH_URL + URLEncoder.encode(query, StandardCharsets.UTF_8.displayName()));
-        } catch(MalformedURLException | UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
+    public Map<String, String> search(String query) throws IOException {
+        URL url = new URL(SEARCH_URL + URLEncoder.encode(query, StandardCharsets.UTF_8.displayName()));
 
         List<List<String>> parsed;
         try(Reader reader = new InputStreamReader(url.openStream(), StandardCharsets.UTF_8)) {
             parsed = (List<List<String>>) new JSONParser().parse(reader);
-        } catch(IOException | ParseException e) {
+        } catch(ParseException e) {
             throw new RuntimeException(e);
         }
 

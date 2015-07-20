@@ -13,6 +13,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -34,65 +36,83 @@ public class MangaScraper {
      * @param dir the directory to create
      * @return whether a new directory was actually created or not
      */
-    private boolean createDirectory(Path dir) {
+    private boolean createDirectory(Path dir) throws IOException {
         if(Files.isDirectory(dir)) {
             return false;
         }
 
-        try {
-            Files.createDirectory(dir);
-            return true;
-        } catch(IOException e) {
-            throw new RuntimeException(e);
-        }
+        Files.createDirectory(dir);
+        return true;
     }
 
-    public void download(String url, Range range, Path output) {
-        createDirectory(output);
+    public void download(String url, Range range, Path output, BiConsumer<Integer, Integer> progressHandler, BiConsumer<Chapter, IOException> errorHandler) {
+        String name;
 
-        String name = getName(url);
+        try {
+            createDirectory(output);
+            name = getName(url);
+        } catch(IOException e) {
+            errorHandler.accept(null, e);
+            return;
+        }
+
         Path mangaFolder = output.resolve(name);
-        createDirectory(mangaFolder);
+        try {
+            createDirectory(mangaFolder);
+        } catch(IOException e) {
+            errorHandler.accept(null, e);
+            return;
+        }
 
-        List<Chapter> chapters = getChapters(url);
+        List<Chapter> chapters;
+        try {
+            chapters = getChapters(url);
+        } catch(IOException e) {
+            errorHandler.accept(null, e);
+            return;
+        }
 
-        chapters.stream().sorted()
+        Wrapper<Integer> i = new Wrapper<>(0);
+        List<Chapter> toDownload = chapters.stream().sorted()
             .filter(chapter -> chapter.number >= range.min && chapter.number <= range.max)
-            .forEach(chapter -> downloadChapter(chapter, mangaFolder));
+            .collect(Collectors.toList());
+
+        toDownload
+            .forEach(chapter -> {
+                downloadChapter(chapter, mangaFolder, errorHandler);
+                progressHandler.accept(++i.value, toDownload.size());
+            });
     }
 
-    public String getName(String url) {
-        Document document;
-        try {
-            document = Jsoup.connect(url).get();
-        } catch(IOException e) {
-            throw new RuntimeException(e);
-        }
-        return impl.getName(document);
+    private String getName(String url) throws IOException {
+        return impl.getName(Jsoup.connect(url).get());
     }
 
-    public List<Chapter> getChapters(String url) {
-        Document document;
-        try {
-            document = Jsoup.connect(url).get();
-        } catch(IOException e) {
-            throw new RuntimeException(e);
-        }
-        return impl.getChapters(document, false);
+    public List<Chapter> getChapters(String url) throws IOException {
+        return impl.getChapters(Jsoup.connect(url).get(), false);
     }
 
-    public void downloadChapter(Chapter chapter, Path folder) {
+    public void downloadChapter(Chapter chapter, Path folder, BiConsumer<Chapter, IOException> errorHandler) {
         Path downloadDir = folder.resolve(chapter.name);
 
         Set<String> existing;
-        if(createDirectory(downloadDir)) {
+        boolean newDirectory;
+        try {
+            newDirectory = createDirectory(downloadDir);
+        } catch(IOException e) {
+            errorHandler.accept(chapter, e);
+            return;
+        }
+
+        if(newDirectory) {
             existing = Collections.emptySet();
         } else {
             Stream<Path> stream;
             try {
                 stream = Files.walk(downloadDir, 1);
             } catch(IOException e) {
-                throw new RuntimeException(e);
+                errorHandler.accept(chapter, e);
+                return;
             }
             existing = stream
                 .filter(path -> !path.equals(downloadDir))
@@ -104,8 +124,8 @@ public class MangaScraper {
         try {
             document = Jsoup.connect(chapter.url).get();
         } catch(IOException e) {
-            // TODO Retry?
-            throw new RuntimeException(e);
+            errorHandler.accept(chapter, e);
+            return;
         }
 
         impl.getImageUrlsForChapter(document).entrySet()
@@ -113,17 +133,17 @@ public class MangaScraper {
             //.stream()
             .filter(entry -> !existing.contains(String.valueOf(entry.getKey())))
             .forEach(entry ->
-                    downloadImage(entry.getValue(), entry.getKey(), downloadDir)
+                downloadImage(chapter, entry.getValue(), entry.getKey(), downloadDir, errorHandler)
             );
     }
 
-    private void downloadImage(String url, int number, Path downloadDir) {
+    private void downloadImage(Chapter chapter, String url, int number, Path downloadDir, BiConsumer<Chapter, IOException> errorHandler) {
         Document document;
         try {
             document = Jsoup.connect(url).get();
         } catch(IOException e) {
-            // TODO Retry?
-            throw new RuntimeException(e);
+            errorHandler.accept(chapter, e);
+            return;
         }
 
         String imgSrc = impl.getImageUrl(document);
@@ -131,7 +151,7 @@ public class MangaScraper {
         try {
             imgUrl = new URL(imgSrc);
         } catch(MalformedURLException e) {
-            e.printStackTrace();
+            errorHandler.accept(chapter, e);
             return;
         }
         String ext = Utils.getExtension(imgSrc);
@@ -140,12 +160,17 @@ public class MangaScraper {
         try {
             Files.copy(imgUrl.openStream(), imgPath);
         } catch(IOException e) {
-            e.printStackTrace();
+            errorHandler.accept(chapter, e);
         }
     }
 
-    public Map<String, String> search(String query) {
-        return impl.search(query);
+    public Map<String, String> search(String query, Consumer<IOException> errorHandler) {
+        try {
+            return impl.search(query);
+        } catch(IOException e) {
+            errorHandler.accept(e);
+            return Collections.emptyMap();
+        }
     }
 
 }

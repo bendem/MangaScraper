@@ -14,8 +14,16 @@ public class Range {
     }
 
     public Range(double min, double max) {
-        this.min = min;
-        this.max = max;
+        if(min > max) {
+            this.min = max;
+            this.max = min;
+        } else {
+            this.min = min;
+            this.max = max;
+        }
+        if(this.min < 0) {
+            throw new IllegalArgumentException("Can't provide negative minimum");
+        }
     }
 
     public static Range parse(String str) {

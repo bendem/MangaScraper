@@ -16,16 +16,11 @@ import java.util.stream.Collectors;
 public class MangaTownScraper implements Scraper {
 
     @Override
-    public Map<String, String> search(String query) {
-        Document search;
-        try {
-            search = Jsoup
-                .connect("http://www.mangatown.com/search.php")
-                .data("name", query)
-                .get();
-        } catch(IOException e) {
-            throw new RuntimeException(e);
-        }
+    public Map<String, String> search(String query) throws IOException {
+        Document search = Jsoup
+            .connect("http://www.mangatown.com/search.php")
+            .data("name", query)
+            .get();
 
         return search.select(".search_result > ul > li > .title > a").stream()
             .collect(Collectors.toMap(

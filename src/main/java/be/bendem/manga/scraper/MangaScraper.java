@@ -9,6 +9,8 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.DecimalFormat;
+import java.text.Format;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -19,10 +21,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * TODO Better error handling, recover and such
  * TODO Write a file with a download summary to allow restarting.
  */
 public class MangaScraper {
+
+    private static final Format CHAPTER_FORMAT = new DecimalFormat("0000.#");
 
     private final Scraper impl;
 
@@ -64,11 +67,8 @@ public class MangaScraper {
             return;
         }
 
-        List<Chapter> chapters;
-        try {
-            chapters = getChapters(url);
-        } catch(IOException e) {
-            errorHandler.accept(null, e);
+        List<Chapter> chapters = getChapters(url, e -> errorHandler.accept(null, e));
+        if(chapters.isEmpty()) {
             return;
         }
 
@@ -88,12 +88,17 @@ public class MangaScraper {
         return impl.getName(Jsoup.connect(url).get());
     }
 
-    public List<Chapter> getChapters(String url) throws IOException {
-        return impl.getChapters(Jsoup.connect(url).get(), false);
+    public List<Chapter> getChapters(String url, Consumer<IOException> errorHandler) {
+        try {
+            return impl.getChapters(Jsoup.connect(url).get(), false);
+        } catch(IOException e) {
+            errorHandler.accept(e);
+            return Collections.emptyList();
+        }
     }
 
     public void downloadChapter(Chapter chapter, Path folder, BiConsumer<Chapter, IOException> errorHandler) {
-        Path downloadDir = folder.resolve(chapter.name);
+        Path downloadDir = folder.resolve(CHAPTER_FORMAT.format(chapter.number));
 
         Set<String> existing;
         boolean newDirectory;

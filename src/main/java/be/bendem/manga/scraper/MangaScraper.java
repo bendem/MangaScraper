@@ -10,6 +10,7 @@ import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.text.Format;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -88,7 +89,9 @@ public class MangaScraper {
 
     public List<Chapter> getChapters(String url, Consumer<IOException> errorHandler) {
         try {
-            return impl.getChapters(new URL(url).openStream(), url, false);
+            List<Chapter> chapters = impl.getChapters(new URL(url).openStream(), url, false);
+            chapters.sort(Comparator.naturalOrder());
+            return chapters;
         } catch(IOException e) {
             errorHandler.accept(e);
             return Collections.emptyList();

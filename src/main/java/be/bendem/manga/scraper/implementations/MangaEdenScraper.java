@@ -55,13 +55,16 @@ public class MangaEdenScraper implements Scraper {
                     if (result2.equalsIgnoreCase(lquery)) {
                         return 1;
                     }
+                    if(result1.toLowerCase().startsWith(lquery) && result2.toLowerCase().startsWith(lquery)) {
+                        return result1.compareToIgnoreCase(result2);
+                    }
                     if (result1.toLowerCase().startsWith(lquery)) {
                         return -1;
                     }
                     if (result2.toLowerCase().startsWith(lquery)) {
                         return 1;
                     }
-                    return 1;
+                    return result1.compareToIgnoreCase(result2);
                 })
             ));
     }

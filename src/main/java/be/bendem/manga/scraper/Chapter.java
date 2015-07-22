@@ -28,4 +28,13 @@ public class Chapter implements Comparable<Chapter> {
         return Double.compare(this.number, o.number);
     }
 
+    @Override
+    public String toString() {
+        return "Chapter{" +
+            "number=" + number +
+            ", name='" + name + '\'' +
+            ", url='" + url + '\'' +
+            '}';
+    }
+
 }

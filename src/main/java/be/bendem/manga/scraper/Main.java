@@ -21,6 +21,7 @@ public class Main {
             return;
         }
 
+        System.out.println("| " + search.size() + " results found:");
         search
             .entrySet().stream()
             .map(e -> "| " + e.getKey() + ": " + e.getValue())

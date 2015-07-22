@@ -6,6 +6,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -31,14 +32,14 @@ public class MangaTownScraper implements Scraper {
     }
 
     @Override
-    public String getName(Document document) {
-        return document.select(".title-top").text();
+    public String getName(InputStream is, String url) throws IOException {
+        return Scraper.jsoup(is, url).select(".title-top").text();
     }
 
     @Override
-    public List<Chapter> getChapters(Document document, boolean bonus) {
-        String name = getName(document);
-        return document.select(".chapter_list > li").stream()
+    public List<Chapter> getChapters(InputStream is, String url, boolean bonus) throws IOException {
+        String name = getName(is, url);
+        return Scraper.jsoup(is, url).select(".chapter_list > li").stream()
             .map(element -> new Chapter(
                 element.select("a").text().substring(name.length() + 1),
                 element.select("span").first().text(),
@@ -48,8 +49,8 @@ public class MangaTownScraper implements Scraper {
     }
 
     @Override
-    public Map<Integer, String> getImageUrlsForChapter(Document document) {
-        return document.select("#top_chapter_list + .page_select > select > option").stream()
+    public Map<Integer, String> getImageUrlsForChapter(InputStream is, String url) throws IOException {
+        return Scraper.jsoup(is, url).select("#top_chapter_list + .page_select > select > option").stream()
             .collect(Collectors.toMap(
                 option -> Integer.parseInt(option.text()),
                 option -> option.absUrl("value")
@@ -57,8 +58,8 @@ public class MangaTownScraper implements Scraper {
     }
 
     @Override
-    public String getImageUrl(Document document) {
-        String src = document.select("#image").first().absUrl("src");
+    public String getImageUrl(InputStream is, String url) throws IOException {
+        String src = Scraper.jsoup(is, url).select("#image").first().absUrl("src");
         return src.substring(0, src.indexOf('?'));
     }
 

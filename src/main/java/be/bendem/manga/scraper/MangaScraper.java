@@ -1,9 +1,7 @@
 package be.bendem.manga.scraper;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -85,12 +83,12 @@ public class MangaScraper {
     }
 
     private String getName(String url) throws IOException {
-        return impl.getName(Jsoup.connect(url).get());
+        return impl.getName(new URL(url).openStream(), url);
     }
 
     public List<Chapter> getChapters(String url, Consumer<IOException> errorHandler) {
         try {
-            return impl.getChapters(Jsoup.connect(url).get(), false);
+            return impl.getChapters(new URL(url).openStream(), url, false);
         } catch(IOException e) {
             errorHandler.accept(e);
             return Collections.emptyList();
@@ -125,15 +123,23 @@ public class MangaScraper {
                 .collect(Collectors.toSet());
         }
 
-        Document document;
+        InputStream inputStream;
         try {
-            document = Jsoup.connect(chapter.url).get();
+            inputStream = new URL(chapter.url).openStream();
         } catch(IOException e) {
             errorHandler.accept(chapter, e);
             return;
         }
 
-        impl.getImageUrlsForChapter(document).entrySet()
+        Map<Integer, String> imageUrlsForChapter;
+        try {
+            imageUrlsForChapter = impl.getImageUrlsForChapter(inputStream, chapter.url);
+        } catch(IOException e) {
+            errorHandler.accept(chapter, e);
+            return;
+        }
+
+        imageUrlsForChapter.entrySet()
             .parallelStream()
             //.stream()
             .filter(entry -> !existing.contains(String.valueOf(entry.getKey())))
@@ -143,15 +149,22 @@ public class MangaScraper {
     }
 
     private void downloadImage(Chapter chapter, String url, int number, Path downloadDir, BiConsumer<Chapter, IOException> errorHandler) {
-        Document document;
+        InputStream inputStream;
         try {
-            document = Jsoup.connect(url).get();
+            inputStream = new URL(url).openStream();
         } catch(IOException e) {
             errorHandler.accept(chapter, e);
             return;
         }
 
-        String imgSrc = impl.getImageUrl(document);
+        String imgSrc;
+        try {
+            imgSrc = impl.getImageUrl(inputStream, url);
+        } catch(IOException e) {
+            errorHandler.accept(chapter, e);
+            return;
+        }
+
         URL imgUrl;
         try {
             imgUrl = new URL(imgSrc);

@@ -8,6 +8,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.MalformedURLException;
@@ -47,16 +48,16 @@ public class MangaFoxScraper implements Scraper {
     }
 
     @Override
-    public String getName(Document document) {
-        String title = document.select("title").text();
+    public String getName(InputStream is, String url) throws IOException {
+        String title = Scraper.jsoup(is, url).select("title").text();
         return title.substring(0, title.indexOf(" Manga -"));
     }
 
     @Override
-    public List<Chapter> getChapters(Document document, boolean bonus) {
-        String name = getName(document);
+    public List<Chapter> getChapters(InputStream is, String url, boolean bonus) throws IOException {
+        String name = getName(is, url);
 
-        return document.select("#chapters > .chlist > li > div").select("h3, h4").stream()
+        return Scraper.jsoup(is, url).select("#chapters > .chlist > li > div").select("h3, h4").stream()
             .map(element -> {
                 Element link = element.select("a").first();
                 String number = link.text().substring(name.length() + 1);
@@ -70,7 +71,8 @@ public class MangaFoxScraper implements Scraper {
     }
 
     @Override
-    public Map<Integer, String> getImageUrlsForChapter(Document document) {
+    public Map<Integer, String> getImageUrlsForChapter(InputStream is, String url) throws IOException {
+        Document document = Scraper.jsoup(is, url);
         return document.select("#top_bar div > .m > option").stream()
             .filter(option -> !option.attr("value").equals("0"))
             .collect(Collectors.toMap(
@@ -80,7 +82,6 @@ public class MangaFoxScraper implements Scraper {
                     try {
                         return new URL(new URL(document.baseUri()), option.attr("value") + ".html").toExternalForm();
                     } catch(MalformedURLException e) {
-                        // It'll never happen right? :P
                         throw new RuntimeException(e);
                     }
                 }
@@ -88,8 +89,8 @@ public class MangaFoxScraper implements Scraper {
     }
 
     @Override
-    public String getImageUrl(Document document) {
-        return document.select("#image").first().absUrl("src");
+    public String getImageUrl(InputStream is, String url) throws IOException {
+        return Scraper.jsoup(is, url).select("#image").first().absUrl("src");
     }
 
 }

@@ -8,20 +8,21 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Scraper implementation for http://www.mangaeden.com/
+ * Scraper implementation for https://www.mangaeden.com/
  */
 public class MangaEdenScraper implements Scraper {
 
     @Override
     public Map<String, String> search(String query) throws IOException {
         Document search = Jsoup
-            .connect("http://www.mangaeden.com/en-directory/")
+            .connect("https://www.mangaeden.com/en-directory/")
             .data("title", query)
             .get();
 
@@ -34,15 +35,15 @@ public class MangaEdenScraper implements Scraper {
     }
 
     @Override
-    public String getName(Document document) {
-        return document
+    public String getName(InputStream is, String url) throws IOException {
+        return Scraper.jsoup(is, url)
             .select("#leftContent > table > tbody > tr:first-child > td:first-child > a > span:first-child")
             .text();
     }
 
     @Override
-    public List<Chapter> getChapters(Document document, boolean bonus) {
-        Stream<Element> elemStream = document
+    public List<Chapter> getChapters(InputStream is, String url, boolean bonus) throws IOException {
+        Stream<Element> elemStream = Scraper.jsoup(is, url)
             .select("#leftContent > table > tbody > tr > td:first-child > a")
             .stream();
 
@@ -60,8 +61,8 @@ public class MangaEdenScraper implements Scraper {
     }
 
     @Override
-    public Map<Integer, String> getImageUrlsForChapter(Document document) {
-        return document.select("#top-in > div.top-title > select:nth-child(5) > option").stream()
+    public Map<Integer, String> getImageUrlsForChapter(InputStream is, String url) throws IOException {
+        return Scraper.jsoup(is, url).select("#top-in > div.top-title > select:nth-child(5) > option").stream()
             .collect(Collectors.toMap(
                 option -> Integer.parseInt(option.text()),
                 option -> option.absUrl("value")
@@ -69,8 +70,8 @@ public class MangaEdenScraper implements Scraper {
     }
 
     @Override
-    public String getImageUrl(Document document) {
-        return document.select("#mainImg").first().absUrl("src");
+    public String getImageUrl(InputStream is, String url) throws IOException {
+        return Scraper.jsoup(is, url).select("#mainImg").first().absUrl("src");
     }
 
 }

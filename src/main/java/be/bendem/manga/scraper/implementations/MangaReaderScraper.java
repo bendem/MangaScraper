@@ -2,10 +2,10 @@ package be.bendem.manga.scraper.implementations;
 
 import be.bendem.manga.scraper.Chapter;
 import be.bendem.manga.scraper.Scraper;
-import org.jsoup.nodes.Document;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -38,15 +38,15 @@ public class MangaReaderScraper implements Scraper {
     }
 
     @Override
-    public String getName(Document document) {
-        return document.select("#mangaproperties .aname").text();
+    public String getName(InputStream is, String url) throws IOException {
+        return Scraper.jsoup(is, url).select("#mangaproperties .aname").text();
     }
 
     @Override
-    public List<Chapter> getChapters(Document document, boolean bonus) {
-        String name = getName(document);
+    public List<Chapter> getChapters(InputStream is, String url, boolean bonus) throws IOException {
+        String name = getName(is, url);
 
-        return document.select("#listing > tbody > tr > td:first-child").stream()
+        return Scraper.jsoup(is, url).select("#listing > tbody > tr > td:first-child").stream()
             .map(element -> {
                 String[] parts = element.text().split(":");
                 return new Chapter(
@@ -59,8 +59,8 @@ public class MangaReaderScraper implements Scraper {
     }
 
     @Override
-    public Map<Integer, String> getImageUrlsForChapter(Document document) {
-        return document.select("#pageMenu > option").stream()
+    public Map<Integer, String> getImageUrlsForChapter(InputStream is, String url) throws IOException {
+        return Scraper.jsoup(is, url).select("#pageMenu > option").stream()
             .collect(Collectors.toMap(
                 option -> Integer.parseInt(option.text()),
                 option -> option.absUrl("value")
@@ -68,8 +68,8 @@ public class MangaReaderScraper implements Scraper {
     }
 
     @Override
-    public String getImageUrl(Document document) {
-        return document.select("#img").attr("src");
+    public String getImageUrl(InputStream is, String url) throws IOException {
+        return Scraper.jsoup(is, url).select("#img").attr("src");
     }
 
 }

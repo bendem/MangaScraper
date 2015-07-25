@@ -1,5 +1,6 @@
 package be.bendem.manga.scraper;
 
+import com.google.gson.Gson;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
@@ -78,5 +79,7 @@ public interface Scraper {
     static Document jsoup(InputStream is, String baseUri) throws IOException {
         return Jsoup.parse(is, "UTF-8", baseUri);
     }
+
+    Gson GSON = new Gson();
 
 }

@@ -2,10 +2,10 @@ package be.bendem.manga.scraper.implementations;
 
 import be.bendem.manga.scraper.Chapter;
 import be.bendem.manga.scraper.Scraper;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * Scraper implementation for https://www.mangaeden.com/ using api
@@ -34,34 +35,33 @@ public class MangaEdenScraper implements Scraper {
         URL url = new URL(LIST_URL);
         String lquery = query.toLowerCase();
 
-        JSONObject parsed;
+        JsonObject parsed;
         try(Reader reader = new InputStreamReader(url.openStream(), StandardCharsets.UTF_8)) {
-            parsed = (JSONObject) new JSONParser().parse(reader);
-        } catch(ParseException e) {
-            throw new RuntimeException(e);
+            parsed = GSON.fromJson(reader, JsonObject.class);
         }
 
-        List<JSONObject> listParsed = (List<JSONObject>) parsed.get("manga");
-        return listParsed.stream()
-            .filter(jsonObject -> ((String) jsonObject.get("t")).toLowerCase().contains(lquery))
+        JsonArray listParsed = parsed.getAsJsonArray("manga");
+        return StreamSupport.stream(listParsed.spliterator(), false)
+            .map(JsonElement::getAsJsonObject)
+            .filter(jsonObject -> jsonObject.get("t").getAsString().toLowerCase().contains(lquery))
             .collect(Collectors.toMap(
-                manga -> (String) manga.get("t"),
-                manga -> MANGA_URL + manga.get("i"),
+                manga -> manga.get("t").getAsString(),
+                manga -> MANGA_URL + manga.get("i").getAsString(),
                 (a, b) -> a,
                 () -> new TreeMap<>((result1, result2) -> {
-                    if (result1.equalsIgnoreCase(lquery)) {
+                    if(result1.equalsIgnoreCase(lquery)) {
                         return -1;
                     }
-                    if (result2.equalsIgnoreCase(lquery)) {
+                    if(result2.equalsIgnoreCase(lquery)) {
                         return 1;
                     }
                     if(result1.toLowerCase().startsWith(lquery) && result2.toLowerCase().startsWith(lquery)) {
                         return result1.compareToIgnoreCase(result2);
                     }
-                    if (result1.toLowerCase().startsWith(lquery)) {
+                    if(result1.toLowerCase().startsWith(lquery)) {
                         return -1;
                     }
-                    if (result2.toLowerCase().startsWith(lquery)) {
+                    if(result2.toLowerCase().startsWith(lquery)) {
                         return 1;
                     }
                     return result1.compareToIgnoreCase(result2);
@@ -71,55 +71,53 @@ public class MangaEdenScraper implements Scraper {
 
     @Override
     public String getName(InputStream inputStream, String url) throws IOException {
-        JSONObject parsed;
         try(Reader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
-            parsed = (JSONObject) new JSONParser().parse(reader);
-        } catch(ParseException e) {
-            throw new RuntimeException(e);
+            return GSON.fromJson(reader, JsonObject.class).get("title").getAsString();
         }
-
-        return (String) parsed.get("title");
     }
 
     @Override
     public List<Chapter> getChapters(InputStream inputStream, String url, boolean bonus) throws IOException {
-        JSONObject parsed;
+        Gson gson = new Gson();
+        JsonObject parsed;
         try(Reader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
-            parsed = (JSONObject) new JSONParser().parse(reader);
-        } catch(ParseException e) {
-            throw new RuntimeException(e);
+            parsed = gson.fromJson(reader, JsonObject.class);
         }
 
-        Stream<JSONArray> streamParsed = ((List<JSONArray>) parsed.get("chapters")).stream();
+        JsonArray chapters = parsed.get("chapters").getAsJsonArray();
+        Stream<JsonArray> chapterStream = StreamSupport.stream(chapters.spliterator(), false)
+            .map(JsonElement::getAsJsonArray);
 
         if (!bonus) {
-            streamParsed = streamParsed.filter(chapter -> chapter.get(0) instanceof Long);
+            chapterStream = chapterStream.filter(chapter -> {
+                double asDouble = chapter.get(0).getAsDouble();
+                return Math.ceil(asDouble) == asDouble;
+            });
         }
 
-        return streamParsed
+        return chapterStream
             .map(chapter -> new Chapter(
-                ((Number) chapter.get(0)).doubleValue(),
-                (String) chapter.get(2),
-                CHAPTER_URL + chapter.get(3)
+                chapter.get(0).getAsDouble(),
+                chapter.get(2).isJsonNull() ? "" : chapter.get(2).getAsString(),
+                CHAPTER_URL + chapter.get(3).getAsString()
             ))
             .collect(Collectors.toList());
     }
 
     @Override
     public Map<Integer, String> getImageUrlsForChapter(InputStream inputStream, String url) throws IOException {
-        JSONObject parsed;
+        JsonObject parsed;
         try(Reader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
-            parsed = (JSONObject) new JSONParser().parse(reader);
-        } catch(ParseException e) {
-            throw new RuntimeException(e);
+            parsed = GSON.fromJson(reader, JsonObject.class);
         }
 
-        Stream<JSONArray> streamParsed = ((List<JSONArray>) parsed.get("images")).stream();
+        Stream<JsonArray> streamParsed = StreamSupport.stream(parsed.get("images").getAsJsonArray().spliterator(), false)
+            .map(JsonElement::getAsJsonArray);
 
         return streamParsed
             .collect(Collectors.toMap(
-                image -> ((Number) image.get(0)).intValue(),
-                image -> IMAGE_URL + image.get(1)
+                image -> image.get(0).getAsInt(),
+                image -> IMAGE_URL + image.get(1).getAsString()
             ));
     }
 

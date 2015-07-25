@@ -20,12 +20,7 @@ repositories {
 
 dependencies {
     compile group: 'org.jsoup', name: 'jsoup', version: '1.8.2'
-    compile group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1'
-}
-
-shadowJar {
-    exclude '*junit*'
-    exclude '*hamcrest*'
+    compile group: 'com.google.code.gson', name: 'gson', version: '2.3.1'
 }
 
 build.dependsOn(shadowJar)

@@ -2,8 +2,8 @@ package be.bendem.manga.scraper.implementations;
 
 import be.bendem.manga.scraper.Chapter;
 import be.bendem.manga.scraper.Scraper;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
@@ -18,31 +18,31 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  * Scraper implementation for http://mangafox.me/
  */
 public class MangaFoxScraper implements Scraper {
 
-    public static final String SEARCH_URL = "http://mangafox.me/ajax/search.php?term=";
-    public static final String MANGA_URL = "http://mangafox.me/manga/";
+    private static final String SEARCH_URL = "http://mangafox.me/ajax/search.php?term=";
+    private static final String MANGA_URL = "http://mangafox.me/manga/";
 
     @Override
     @SuppressWarnings("unchecked")
     public Map<String, String> search(String query) throws IOException {
         URL url = new URL(SEARCH_URL + URLEncoder.encode(query, StandardCharsets.UTF_8.displayName()));
 
-        List<List<String>> parsed;
+        JsonArray parsed;
         try(Reader reader = new InputStreamReader(url.openStream(), StandardCharsets.UTF_8)) {
-            parsed = (List<List<String>>) new JSONParser().parse(reader);
-        } catch(ParseException e) {
-            throw new RuntimeException(e);
+            parsed = GSON.fromJson(reader, JsonArray.class);
         }
 
-        return parsed.stream()
+        return StreamSupport.stream(parsed.spliterator(), false)
+            .map(JsonElement::getAsJsonArray)
             .collect(Collectors.toMap(
-                arr -> arr.get(1),
-                arr -> MANGA_URL + arr.get(2),
+                arr -> arr.get(1).getAsString(),
+                arr -> MANGA_URL + arr.get(2).getAsString(),
                 (a, b) -> a // If there are duplicates, just ignore them
             ));
     }

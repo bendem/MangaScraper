@@ -30,7 +30,7 @@ public class Main {
 
     public static void main(String[] args) {
         String url = null;
-        String implementation = "MangaReaderScraper";
+        String implementation = "MangaEdenScraper";
         String output = "download";
         String search = null;
         Range range = new Range();

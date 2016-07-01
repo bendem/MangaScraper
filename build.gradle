@@ -1,7 +1,7 @@
 plugins {
     id 'java'
     id 'maven'
-    id 'com.github.johnrengelman.shadow' version '1.2.1'
+    id 'com.github.johnrengelman.shadow' version '1.2.3'
 }
 
 group 'be.bendem.manga'
